@@ -2,7 +2,6 @@ import sys, datetime as dt, subprocess as sp
 import os
 import time as t
 
-today = dt.datetime.today()
 try:
     args = [int(a) for a in sys.argv[1].split(':')]
 except:
@@ -18,9 +17,11 @@ ex.
         -> alarm 5min from now on
 """)
         raise SystemExit
+
 print(sys.argv[1])
 def normalAlarm():
     time = dt.time(*args)
+    today = dt.datetime.today()
     atime = dt.datetime.combine(today, time)
     try:
         diff = sys.argv[2]
@@ -31,18 +32,14 @@ def normalAlarm():
         atime += dt.timedelta(days=1)
     return atime
 
-def minTimerAlarm():
-    args = sys.argv[1].rstrip('m')
-    return dt.datetime.now() + dt.timedelta(minutes=int(args))
-
-def hourTimerAlarm():
-    args = sys.argv[1].rstrip('h')
-    return dt.datetime.now() + dt.timedelta(hours=int(args))
+def TimerAlarm(x, mult):
+    args = sys.argv[1].rstrip(x)
+    return dt.datetime.now() + dt.timedelta(minutes=int(args)*mult)
 
 if 'm' in sys.argv[1]:
-    atime = minTimerAlarm()
+    atime = TimerAlarm('m',1)
 elif 'h' in sys.argv[1]:
-    atime = hourTimerAlarm()
+    atime = TimerAlarm('h',60)
 else:
     atime = normalAlarm()
 print(atime)
@@ -53,4 +50,4 @@ while True:
         t.sleep(5)
         #break
         continue
-    t.sleep(10)
+    t.sleep(5)
