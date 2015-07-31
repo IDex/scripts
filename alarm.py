@@ -1,6 +1,6 @@
 import sys, datetime as dt, subprocess as sp
-import os
 import time as t
+import os
 
 try:
     args = [int(a) for a in sys.argv[1].split(':')]
@@ -32,14 +32,13 @@ def normalAlarm():
         atime += dt.timedelta(days=1)
     return atime
 
-def TimerAlarm(x, mult):
+def timerAlarm(x, mult):
     args = sys.argv[1].rstrip(x)
     return dt.datetime.now() + dt.timedelta(minutes=int(args)*mult)
-
 if 'm' in sys.argv[1]:
-    atime = TimerAlarm('m',1)
+    atime = timerAlarm('m',1)
 elif 'h' in sys.argv[1]:
-    atime = TimerAlarm('h',60)
+    atime = timerAlarm('h',60)
 else:
     atime = normalAlarm()
 print(atime)
