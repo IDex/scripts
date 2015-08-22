@@ -66,7 +66,7 @@ Repeat?: {}\
 while True:
     diff = dt.datetime.now() > atime
     if diff:
-        sp.call(['mpv', os.path.expanduser('~/alarma.mp3')])
+        sp.call(['mpv', os.path.expanduser('~/alarma.mp3')], stdout=sp.DEVNULL)
         t.sleep(5)
         if once:
             break
