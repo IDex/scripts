@@ -2,20 +2,20 @@ import os
 import sys
 import re
 import json
-import atexit
 import subprocess as sp
 
 
 def save():
-    with open('watched.json', 'w') as f:
+    with open(os.path.dirname(os.path.realpath(__file__)) +
+              '/watched.json', 'w') as f:
         json.dump(watched, f)
 
-atexit.register(save)
 wdir = os.path.expanduser('~/new/')
 arg = sys.argv[1]
 watched = []
 try:
-    with open('watched.json', 'r') as f:
+    with open(os.path.dirname(os.path.realpath(__file__)) +
+              '/watched.json', 'r') as f:
         watched = json.load(f)
 except:
     watched = []
