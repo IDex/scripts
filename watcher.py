@@ -21,10 +21,9 @@ except:
     watched = []
 matches = [x for x in os.listdir(wdir)
            if re.search(arg, x) and x not in watched]
-# watch the show and add it to watched
 for f in sorted(matches):
     print(f)
-    if not sp.call(['mpv', wdir+f]):
+    if not sp.call(['mpv', '--fs', wdir+f]):
         watched.append(f)
         print(f)
         save()
