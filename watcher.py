@@ -11,7 +11,7 @@ def save():
         json.dump(watched, f)
 
 wdir = os.path.expanduser('~/new/')
-arg = sys.argv[1]
+arg = '.*'.join(sys.argv[1:])
 watched = []
 try:
     with open(os.path.dirname(os.path.realpath(__file__)) +
@@ -20,7 +20,7 @@ try:
 except:
     watched = []
 matches = [x for x in os.listdir(wdir)
-           if re.search(arg, x) and x not in watched]
+           if re.search(arg, x, re.IGNORECASE) and x not in watched]
 for f in sorted(matches):
     print(f)
     if not sp.call(['mpv', '--fs', wdir+f]):
