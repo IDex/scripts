@@ -54,7 +54,7 @@ elif 'h' in sys.argv[1]:
     atime, dtime = timerAlarm('h', 60)
 else:
     atime, dtime = normalAlarm()
-    once = False
+    once = not once
 
 print("""\
 Given time: {}
