@@ -21,9 +21,12 @@ except:
     watched = []
 matches = [x for x in os.listdir(wdir)
            if re.search(arg, x, re.IGNORECASE) and x not in watched]
-for f in sorted(matches):
-    print(f)
-    if not sp.call(['mpv', '--fs', wdir+f]):
-        watched.append(f)
+try:
+    for f in sorted(matches):
         print(f)
-        save()
+        if not sp.call(['mpv', '--fs', wdir+f], stdout=sp.DEVNULL):
+            watched.append(f)
+            print(f)
+            save()
+except KeyboardInterrupt:
+    SystemExit
