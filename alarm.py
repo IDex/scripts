@@ -59,8 +59,9 @@ else:
 print("""\
 Given time: {}
 Alarm time: {}
-Repeat?: {}\
-""".format(sys.argv[1], str(atime).rsplit('.')[0], not once))
+Repeat?: {}
+Original Delta: {}\
+""".format(sys.argv[1], str(atime).rsplit('.')[0], not once, str(dtime).rsplit('.')[0]))
 
 try:
     while True:
