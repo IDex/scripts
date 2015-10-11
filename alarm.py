@@ -44,7 +44,7 @@ except:
 
 once = True
 try:
-    if sys.argv[2] == 'r':
+    if 'r' in sys.argv:
         once = False
 except:
     pass
@@ -59,17 +59,22 @@ else:
 print("""\
 Given time: {}
 Alarm time: {}
-Delta: {}
 Repeat?: {}\
-""".format(sys.argv[1], atime, str(dtime).rsplit('.')[0], not once))
+""".format(sys.argv[1], str(atime).rsplit('.')[0], not once))
 
-while True:
-    diff = dt.datetime.now() > atime
-    if diff:
-        sp.call(['mpv', os.path.expanduser('~/alarma.mp3')], stdout=sp.DEVNULL)
+try:
+    while True:
+        diff = dt.datetime.now() > atime
+        if diff:
+            sp.call(
+                ['mpv', os.path.expanduser('~/alarma.mp3')], stdout=sp.DEVNULL)
+            t.sleep(5)
+            if once:
+                break
+            else:
+                continue
+        print('Delta: {}'.format(
+            str(atime-dt.datetime.now())).rsplit('.')[0], end='\r')
         t.sleep(5)
-        if once:
-            break
-        else:
-            continue
-    t.sleep(5)
+except KeyboardInterrupt:
+    pass
