@@ -60,7 +60,7 @@ Original Delta: {}\
                     continue
             print('Delta: {}'.format(
                 str(atime - dt.datetime.now())).rsplit('.')[0], end='\r')
-            t.sleep(5)
+            t.sleep(3)
     except KeyboardInterrupt:
         pass
 
@@ -71,7 +71,7 @@ if __name__ == "__main__":
                    help='Alarm time, alarm: hh:mm, h; timer: xm, xh')
     p.add_argument('diff', nargs='?', default=0, metavar='D', type=int,
                    help='How many hours earlier should the alarm ring')
-    p.add_argument('-r', action='count',
+    p.add_argument('-r', action='count', default=0,
                    help='''Toggle repeat, default depends on type of time''')
     args = p.parse_args()
     makeAlarm(args)
