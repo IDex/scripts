@@ -1,6 +1,8 @@
 #!/bin/env python3
+"""
+Watch unseen videos in a folder automatically
+"""
 import os
-import sys
 import re
 import json
 import subprocess as sp
@@ -10,6 +12,9 @@ FOLDER = os.path.expanduser('~/new/')
 
 
 class Watcher:
+    """
+    Shows unwatched videos in a folder.
+    """
 
     def __init__(self, files, folder):
         self.folder = folder
@@ -21,7 +26,11 @@ class Watcher:
                   '/watched.json', 'w') as f:
             json.dump(self.watched, f)
 
-    def load(self):
+    @staticmethod
+    def load():
+        """
+        Load watched.json in the directory of watcher.py and return it.
+        """
         watched = []
         try:
             with open(os.path.dirname(os.path.realpath(__file__)) +
@@ -31,25 +40,31 @@ class Watcher:
             print('{} while loading json'.format(e))
         return watched
 
-    def find(self, files, from_watched=False):
+    def find(self, files, include_watched=False):
+        """Find files from video dir and return them."""
         arg = '.*'.join(files)
-        if from_watched:
+        if include_watched:
             matches = [x for x in os.listdir(FOLDER)
                        if re.search(arg, x, re.IGNORECASE)]
         else:
             matches = [x for x in os.listdir(FOLDER)
-                       if re.search(arg, x, re.IGNORECASE) and x not in self.watched]
+                       if re.search(arg, x, re.IGNORECASE) and
+                       x not in self.watched]
         return matches
 
     def clear(self, regex):
+        """
+        Clear files specified by regex from watched or the last one watched.
+        """
         if regex:
-            m = self.find(regex, from_watched=True)
-            self.watched = [x for x in self.watched if not x in m]
+            to_be_removed = self.find(regex, include_watched=True)
+            self.watched = [x for x in self.watched if x not in to_be_removed]
         else:
             self.watched.pop()
         self.save()
 
     def playone(self, f=None):
+        """Play one file from unwatched"""
         if not f:
             f = sorted(self.matches).pop()
         print('Playing {}'.format(f))
@@ -63,7 +78,8 @@ class Watcher:
         for f in sorted(self.matches):
             print('Playing {}'.format(f))
             if nonstop:
-                if not sp.call(['mpv', '--fs', self.folder + f], stdout=sp.DEVNULL):
+                if not sp.call(['mpv', '--fs', self.folder + f],
+                               stdout=sp.DEVNULL):
                     self.watched.append(f)
                     self.save()
                 else:
@@ -72,20 +88,24 @@ class Watcher:
                 if self._ask():
                     return
 
-    def _ask(self):
+    @staticmethod
+    def _ask():
         if 'n' in input('Play next?[Y/n]'):
             return True
         else:
             return False
 
 
-if __name__ == '__main__':
+def main():
+    """
+    Handle argument interpretation
+    """
     parser = argparse.ArgumentParser(
         description='Watch unseen videos in a folder automatically')
     parser.add_argument('-d', '--directory', default=FOLDER,
                         help='Specify directory for videos')
     parser.add_argument('-a', '--ask', action='count', default=0,
-                        help='Watch one file at a time and get asked to continue')
+                        help='Watch one file at a time, get asked to continue')
     parser.add_argument('-c', '--clear', action='count',
                         help='Clear last seen/regex from watched.json')
     parser.add_argument('searchwords', nargs='*')
@@ -94,6 +114,9 @@ if __name__ == '__main__':
     if args.clear:
         watcher.clear(args.searchwords)
     if args.ask:
-        watcher.playall(ask)
+        watcher.playall(args.ask)
     else:
         watcher.playall()
+
+if __name__ == '__main__':
+    main()
