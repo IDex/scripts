@@ -101,7 +101,7 @@ def main():
     Handle argument interpretation
     """
     parser = argparse.ArgumentParser(
-        description='Watch unseen videos in a folder automatically')
+        description=__doc__)
     parser.add_argument('-d', '--directory', default=FOLDER,
                         help='Specify directory for videos')
     parser.add_argument('-a', '--ask', action='count', default=0,
