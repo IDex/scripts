@@ -16,15 +16,17 @@ class Watcher:
     Shows unwatched videos in a folder.
     """
 
-    def __init__(self, files, folder):
+    def __init__(self, files, folder, nosave=False):
         self.folder = folder
         self.watched = self.load()
         self.matches = self.find(files)
+        self.nosave = nosave
 
     def save(self):
-        with open(os.path.dirname(os.path.realpath(__file__)) +
-                  '/watched.json', 'w') as f:
-            json.dump(self.watched, f)
+        if not self.nosave:
+            with open(os.path.dirname(os.path.realpath(__file__)) +
+                      '/watched.json', 'w') as f:
+                json.dump(self.watched, f)
 
     @staticmethod
     def load():
@@ -108,9 +110,11 @@ def main():
                         help='Watch one file at a time, get asked to continue')
     parser.add_argument('-c', '--clear', action='count',
                         help='Clear last seen/regex from watched.json')
+    parser.add_argument('-n', '--nosave', action='store_true', default=False,
+                        help="Don't save watched videos")
     parser.add_argument('searchwords', nargs='*')
     args = parser.parse_args()
-    watcher = Watcher(args.searchwords, args.directory)
+    watcher = Watcher(args.searchwords, args.directory, nosave=args.nosave)
     if args.clear:
         watcher.clear(args.searchwords)
     if args.ask:
