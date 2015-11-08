@@ -65,6 +65,16 @@ class Watcher:
             self.watched.pop()
         self.save()
 
+    def remove(self):
+        """
+        Remove watched from watched directory
+        """
+        for f in self.watched:
+            try:
+                os.remove(FOLDER + f)
+            except FileNotFoundError:
+                print('Missing file:', f)
+
     def playone(self, f=None):
         """Play one file from unwatched"""
         if not f:
@@ -112,11 +122,17 @@ def main():
                         help='Clear last seen/regex from watched.json')
     parser.add_argument('-n', '--nosave', action='store_true', default=False,
                         help="Don't save watched videos")
+    parser.add_argument('-r', '--remove', action='store_true', default=False,
+                        help='Remove watched files from watched directory')
     parser.add_argument('searchwords', nargs='*')
     args = parser.parse_args()
     watcher = Watcher(args.searchwords, args.directory, nosave=args.nosave)
+    if args.remove:
+        watcher.remove()
+        raise SystemExit
     if args.clear:
         watcher.clear(args.searchwords)
+        raise SystemExit
     if args.ask:
         watcher.playall(args.ask)
     else:
