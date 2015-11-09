@@ -21,22 +21,22 @@ class Watcher:
         self.watched = self.load()
         self.matches = self.find(files)
         self.nosave = nosave
+        self.savefile = '/watched.json'
 
     def save(self):
         if not self.nosave:
             with open(os.path.dirname(os.path.realpath(__file__)) +
-                      '/watched.json', 'w') as f:
+                      self.savefile, 'w') as f:
                 json.dump(self.watched, f)
 
-    @staticmethod
-    def load():
+    def load(self):
         """
-        Load watched.json in the directory of watcher.py and return it.
+        Load watched videos in the directory and return them.
         """
         watched = []
         try:
             with open(os.path.dirname(os.path.realpath(__file__)) +
-                      '/watched.json', 'r') as f:
+                      self.savefile, 'r') as f:
                 watched = json.load(f)
         except Exception as e:
             print('{} while loading json'.format(e))
