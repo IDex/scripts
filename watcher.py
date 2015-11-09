@@ -17,11 +17,11 @@ class Watcher:
     """
 
     def __init__(self, files, folder, nosave=False):
+        self.savefile = '/watched.json'
         self.folder = folder
         self.watched = self.load()
         self.matches = self.find(files)
         self.nosave = nosave
-        self.savefile = '/watched.json'
 
     def save(self):
         if not self.nosave:
