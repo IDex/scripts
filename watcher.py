@@ -124,6 +124,8 @@ def main():
                         help="Don't save watched videos")
     parser.add_argument('-r', '--remove', action='store_true', default=False,
                         help='Remove watched files from watched directory')
+    parser.add_argument('-l', '--list', action='store_true', default=False,
+                        help='List watchable files instead of watching them')
     parser.add_argument('searchwords', nargs='*')
     args = parser.parse_args()
     watcher = Watcher(args.searchwords, args.directory, nosave=args.nosave)
@@ -133,6 +135,9 @@ def main():
     if args.clear:
         watcher.clear(args.searchwords)
         raise SystemExit
+    if args.list:
+        for f in watcher.matches:
+            print(f)
     if args.ask:
         watcher.playall(args.ask)
     else:
