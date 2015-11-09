@@ -131,7 +131,6 @@ def main():
     watcher = Watcher(args.searchwords, args.directory, nosave=args.nosave)
     if args.remove:
         watcher.remove()
-        raise SystemExit
     if args.clear:
         watcher.clear(args.searchwords)
         raise SystemExit
