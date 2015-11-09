@@ -138,6 +138,7 @@ def main():
     if args.list:
         for f in watcher.matches:
             print(f)
+        raise SystemExit
     if args.ask:
         watcher.playall(args.ask)
     else:
