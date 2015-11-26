@@ -47,10 +47,10 @@ class Watcher:
         """Find files from video dir and return them."""
         arg = '.*'.join(files)
         if include_watched:
-            matches = [x for x in os.listdir(FOLDER)
+            matches = [x for x in os.listdir(self.folder)
                        if re.search(arg, x, re.IGNORECASE)]
         else:
-            matches = [x for x in os.listdir(FOLDER)
+            matches = [x for x in os.listdir(self.folder)
                        if re.search(arg, x, re.IGNORECASE) and
                        x not in self.watched]
         return matches
@@ -72,7 +72,7 @@ class Watcher:
         """
         for f in self.watched:
             try:
-                os.remove(FOLDER + f)
+                os.remove(self.folder + '/' + f)
             except FileNotFoundError:
                 print('Missing file:', f)
 
