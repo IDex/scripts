@@ -9,6 +9,7 @@ import subprocess as sp
 import argparse
 
 FOLDER = os.path.expanduser('~/new/')
+PROG = 'mpv'
 
 
 class Watcher:
@@ -90,7 +91,7 @@ class Watcher:
         for f in sorted(self.matches):
             print('Playing {}'.format(f))
             if nonstop:
-                if not sp.call(['mpv', '--fs', self.folder + f],
+                if not sp.call([PROG, '--fs', self.folder + f],
                                stdout=sp.DEVNULL):
                     self.watched.append(f)
                     self.save()
@@ -124,8 +125,12 @@ def main():
                         help="Don't save watched videos")
     parser.add_argument('-r', '--remove', action='store_true', default=False,
                         help='Remove watched files from watched directory')
+    parser.add_argument('-i', '--ignore', action='store_true', default=False,
+                        help='Watch everything in folder, ignore history')
     parser.add_argument('-l', '--list', action='store_true', default=False,
                         help='List watchable files instead of watching them')
+    parser.add_argument('-lw', '--listwatched', action='store_true',
+                        default=False, help='List watched files')
     parser.add_argument('searchwords', nargs='*')
     args = parser.parse_args()
     watcher = Watcher(args.searchwords, args.directory, nosave=args.nosave)
@@ -134,8 +139,14 @@ def main():
     if args.clear:
         watcher.clear(args.searchwords)
         raise SystemExit
+    if args.ignore:
+        watcher.matches = watcher.find(args.searchwords, include_watched=True)
     if args.list:
-        for f in watcher.matches:
+        for f in sorted(watcher.matches):
+            print(f)
+        raise SystemExit
+    if args.listwatched:
+        for f in watcher.watched:
             print(f)
         raise SystemExit
     if args.ask:
