@@ -25,15 +25,14 @@ class Watcher:
         self.nosave = nosave
 
     def save(self):
+        """Save watched files, unless forbidden"""
         if not self.nosave:
             with open(os.path.dirname(os.path.realpath(__file__)) +
                       self.savefile, 'w') as f:
                 json.dump(self.watched, f)
 
     def load(self):
-        """
-        Load watched videos in the directory and return them.
-        """
+        """Load watched videos in the directory and return them."""
         watched = []
         try:
             with open(os.path.dirname(os.path.realpath(__file__)) +
@@ -47,10 +46,10 @@ class Watcher:
         """Find files from video dir and return them."""
         arg = '.*'.join(files)
         if include_watched:
-            matches = [x for x in os.listdir(self.folder)
+            matches = [x for x in os.walk(self.folder).__next__()[2]
                        if re.search(arg, x, re.IGNORECASE)]
         else:
-            matches = [x for x in os.listdir(self.folder)
+            matches = [x for x in os.walk(self.folder).__next__()[2]
                        if re.search(arg, x, re.IGNORECASE) and
                        x not in self.watched]
         return matches
@@ -67,9 +66,7 @@ class Watcher:
         self.save()
 
     def remove(self):
-        """
-        Remove watched from watched directory
-        """
+        """Remove watched from watched directory"""
         for f in self.watched:
             try:
                 os.remove(self.folder + '/' + f)
@@ -88,6 +85,7 @@ class Watcher:
             self.save()
 
     def playall(self, nonstop=True):
+        """Play all files that match"""
         for f in sorted(self.matches):
             print('Playing {}'.format(f))
             if nonstop:
