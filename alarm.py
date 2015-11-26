@@ -11,6 +11,7 @@ FILE = os.path.expanduser('~/alarma.mp3')
 
 
 def normalAlarm(time, diff):
+    '''Alarm that rings at certain time'''
     formattedtime = dt.time(*(int(x) for x in time.split(':')))
     today = dt.datetime.today()
     atime = dt.datetime.combine(today, formattedtime)
@@ -21,19 +22,20 @@ def normalAlarm(time, diff):
 
 
 def timerAlarm(time, x, mult):
+    '''Alarm that rings after certain time'''
     cleantime = time.rstrip(x)
     diff = dt.timedelta(minutes=int(cleantime) * mult)
     return (dt.datetime.now() + diff, diff)
 
 
-def makeAlarm(args):
-    once = not args.r
-    if 'm' in args.time:
-        atime, dtime = timerAlarm(args.time, 'm', 1)
-    elif 'h' in args.time:
-        atime, dtime = timerAlarm(args.time, 'h', 60)
+def makeAlarm(timearg, diff=0, repeat=0):
+    once = not repeat
+    if 'm' in timearg:
+        atime, dtime = timerAlarm(timearg, 'm', 1)
+    elif 'h' in timearg:
+        atime, dtime = timerAlarm(timearg, 'h', 60)
     else:
-        atime, dtime = normalAlarm(args.time, args.diff)
+        atime, dtime = normalAlarm(timearg, diff)
         once = not once
 
     print("""\
@@ -46,7 +48,8 @@ Original Delta: {}\
 
     try:
         while True:
-            diff = dt.datetime.now() > atime
+            diff = dt.datetime.now() > atime and atime < dt.datetime.now() + \
+                dt.timedelta(days=0, hours=0, minutes=10)
             if diff:
                 sp.call(
                     [PROG, FILE],
@@ -75,4 +78,4 @@ if __name__ == "__main__":
     p.add_argument('-r', action='count', default=0,
                    help='''Toggle repeat, default depends on type of time''')
     args = p.parse_args()
-    makeAlarm(args)
+    makeAlarm(args.time, args.diff, args.r)
