@@ -9,7 +9,7 @@ import subprocess as sp
 import argparse
 
 FOLDER = os.path.expanduser('~/new/')
-PROG = 'mpv'
+PROG = 'mpv --fs --alang=jpn,en --slang=jpn,en'
 
 
 class Watcher:
@@ -17,12 +17,13 @@ class Watcher:
     Shows unwatched videos in a folder.
     """
 
-    def __init__(self, files, folder, nosave=False):
+    def __init__(self, files, folder, nosave=False, player=None):
         self.savefile = '/watched.json'
         self.folder = folder
         self.watched = self.load()
         self.matches = self.find(files)
         self.nosave = nosave
+        self.player = player
 
     def save(self):
         """Save watched files, unless forbidden"""
@@ -89,7 +90,7 @@ class Watcher:
         for f in sorted(self.matches):
             print('Playing {}'.format(f))
             if nonstop:
-                if not sp.call([PROG, '--fs', self.folder + f],
+                if not sp.call([*self.player.split(), self.folder + f],
                                stdout=sp.DEVNULL):
                     self.watched.append(f)
                     self.save()
@@ -115,6 +116,8 @@ def main():
         description=__doc__)
     parser.add_argument('-d', '--directory', default=FOLDER,
                         help='Specify directory for videos')
+    parser.add_argument('-p', '--player', default=PROG, nargs='?',
+                        help='Specify alternative player command for videos')
     parser.add_argument('-a', '--ask', action='count', default=0,
                         help='Watch one file at a time, get asked to continue')
     parser.add_argument('-c', '--clear', action='count',
@@ -131,7 +134,10 @@ def main():
                         default=False, help='List watched files')
     parser.add_argument('searchwords', nargs='*')
     args = parser.parse_args()
-    watcher = Watcher(args.searchwords, args.directory, nosave=args.nosave)
+    watcher = Watcher(args.searchwords,
+                      args.directory,
+                      nosave=args.nosave,
+                      player=args.player)
     if args.remove:
         watcher.remove()
     if args.clear:
