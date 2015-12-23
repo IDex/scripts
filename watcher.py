@@ -47,7 +47,7 @@ class Watcher:
         """Find files from video dir and return them."""
         arg = '.*'.join(files)
         if include_watched:
-            matches = [x for x in os.walk(self.folder).__next__()[2]
+            matches = [x for x in self.watched+os.walk(self.folder).__next__()[2]
                        if re.search(arg, x, re.IGNORECASE)]
         else:
             matches = [x for x in os.walk(self.folder).__next__()[2]
@@ -70,9 +70,11 @@ class Watcher:
         """Remove watched from watched directory"""
         for f in self.watched:
             try:
-                os.remove(self.folder + '/' + f)
-            except FileNotFoundError:
+                os.remove(self.folder + f)
+            except (FileNotFoundError, IsADirectoryError):
                 print('Missing file:', f)
+            else:
+                print('Removed file:', self.folder + f)
 
     def playone(self, f=None):
         """Play one file from unwatched"""
