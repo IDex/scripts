@@ -116,7 +116,7 @@ def main():
     """
     parser = argparse.ArgumentParser(
         description=__doc__)
-    parser.add_argument('-d', '--directory', default=FOLDER,
+    parser.add_argument('-d', '--directory', default=FOLDER, nargs='?', const='./',
                         help='Specify directory for videos')
     parser.add_argument('-p', '--player', default=PROG, nargs='?',
                         help='Specify alternative player command for videos')
