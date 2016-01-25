@@ -47,8 +47,8 @@ class Watcher:
         """Find files from video dir and return them."""
         arg = '.*'.join(files)
         if include_watched:
-            matches = [x for x in self.watched+os.walk(self.folder).__next__()[2]
-                       if re.search(arg, x, re.IGNORECASE)]
+            matches = list({x for x in self.watched + os.walk(self.folder).__next__()[2]
+                            if re.search(arg, x, re.IGNORECASE)})
         else:
             matches = [x for x in os.walk(self.folder).__next__()[2]
                        if re.search(arg, x, re.IGNORECASE) and
@@ -87,20 +87,18 @@ class Watcher:
             self.watched.append(f)
             self.save()
 
-    def playall(self, nonstop=True):
+    def playall(self, nonstop=False):
         """Play all files that match"""
         for f in sorted(self.matches):
             print('Playing {}'.format(f))
-            if nonstop:
-                if not sp.call([*self.player.split(), self.folder + f],
-                               stdout=sp.DEVNULL):
-                    self.watched.append(f)
-                    self.save()
-                else:
-                    return
+            if not sp.call([*self.player.split(), self.folder + f],
+                           stdout=sp.DEVNULL):
+                self.watched.append(f)
+                self.save()
+            elif nonstop:
+                continue
             else:
-                if self._ask():
-                    return
+                return
 
     @staticmethod
     def _ask():
@@ -120,7 +118,7 @@ def main():
                         help='Specify directory for videos')
     parser.add_argument('-p', '--player', default=PROG, nargs='?',
                         help='Specify alternative player command for videos')
-    parser.add_argument('-a', '--ask', action='count', default=0,
+    parser.add_argument('-ns', '--nonstop', action='store_true', default=False,
                         help='Watch one file at a time, get asked to continue')
     parser.add_argument('-c', '--clear', action='count',
                         help='Clear last seen/regex from watched.json')
@@ -142,11 +140,13 @@ def main():
                       player=args.player)
     if args.remove:
         watcher.remove()
+        raise SystemExit
     if args.clear:
         watcher.clear(args.searchwords)
         raise SystemExit
     if args.ignore:
         watcher.matches = watcher.find(args.searchwords, include_watched=True)
+        watcher.nosave = True
     if args.list:
         for f in sorted(watcher.matches):
             print(f)
@@ -155,8 +155,8 @@ def main():
         for f in watcher.watched:
             print(f)
         raise SystemExit
-    if args.ask:
-        watcher.playall(args.ask)
+    if args.nonstop:
+        watcher.playall(nonstop=True)
     else:
         watcher.playall()
 
