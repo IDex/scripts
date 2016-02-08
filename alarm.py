@@ -4,78 +4,117 @@ import datetime as dt
 import subprocess as sp
 import time as t
 import os
+import re
 import argparse
 
 PROG = 'mpv'
 FILE = os.path.expanduser('~/alarma.mp3')
 
 
-def normalAlarm(time, diff):
-    '''Alarm that rings at certain time'''
-    formattedtime = dt.time(*(int(x) for x in time.split(':')))
-    today = dt.datetime.today()
-    atime = dt.datetime.combine(today, formattedtime)
-    atime = atime - dt.timedelta(days=0, hours=diff)
-    if dt.datetime.now() > atime:
-        atime += dt.timedelta(days=1)
-    return (atime, atime - dt.datetime.now())
+class Alarm:
 
-
-def timerAlarm(time, x, mult):
-    '''Alarm that rings after certain time'''
-    cleantime = time.rstrip(x)
-    diff = dt.timedelta(minutes=int(cleantime) * mult)
-    return (dt.datetime.now() + diff, diff)
-
-
-def makeAlarm(timearg, diff=0, repeat=0):
-    once = not repeat
-    if 'm' in timearg:
-        atime, dtime = timerAlarm(timearg, 'm', 1)
-    elif 'h' in timearg:
-        atime, dtime = timerAlarm(timearg, 'h', 60)
-    else:
-        atime, dtime = normalAlarm(timearg, diff)
-        once = not once
-
-    print("""\
-Given time: {}
-Alarm time: {}
-Repeat?: {}
-Original Delta: {}\
-""".format(sys.argv[1], str(atime).rsplit('.')[0], not once,
-           str(dtime).rsplit('.')[0]))
-
-    try:
-        while True:
-            diff = dt.datetime.now() > atime and atime < dt.datetime.now() + \
-                dt.timedelta(days=0, hours=0, minutes=10)
-            if diff:
-                sp.call(
-                    [PROG, FILE],
-                    stdout=sp.DEVNULL)
-                t.sleep(3)
-                if once or args.r > 1:
-                    if args.r > 1:
-                        args.r -= 2
-                        makeAlarm(args)
+    def __init__(self, *args, repeat=True):
+        for a in args:
+            if 'h' not in a and 'm' not in a:
+                self.rawtime = self.parse(
+                    r'(?P<hours>[0-9]*)[:\.]*(?P<minutes>[0-9]*)', a)
+                if self.rawtime:
                     break
+        for a in args:
+            self.rawdiff = self.parse(
+                r'(?:(?P<hours>[0-9]*)h)*(?:(?P<minutes>[0-9]*)m)*', a)
+            if self.rawdiff:
+                break
+        self.time = None
+        self.diff = None
+        self.repeat = repeat
+        self.setup()
+
+    def setup(self):
+        self.diff = dt.timedelta(
+            hours=self._try_int(self.rawdiff.get('hours')),
+            minutes=self._try_int(self.rawdiff.get('minutes'))
+        )
+        try:
+            self.time = dt.datetime.combine(
+                dt.datetime.today(),
+                dt.time(
+                    hour=self._try_int(self.rawtime.get('hours')),
+                    minute=self._try_int(self.rawtime.get('minutes')))
+            )
+        except AttributeError:  # type is timer
+            self.time = dt.datetime.now()
+            self.diff *= -1
+            self.repeat = not self.repeat
+        self.time -= self.diff
+        if self.time < dt.datetime.now():
+            self.time += dt.timedelta(days=1)
+
+    @staticmethod
+    def parse(regex, string):
+        m = re.search(regex, string)
+        # making sure match object isn't full of None, i.e. not an actual match
+        if m and {x for x in m.groupdict().values() if x is not None}:
+            return m.groupdict(0)
+        else:
+            return None
+
+    def start(self):
+        print(
+            'Given time: {}\n'
+            'Alarm time: {}\n'
+            'Repeat?: {}\n'
+            'Original Delta: {}'
+            .format(
+                sys.argv[1:],
+                str(self.time),
+                bool(self.repeat),
+                str(self.time - dt.datetime.now())))
+        try:
+            self.run()
+        except KeyboardInterrupt:
+            pass
+        return self
+
+    @staticmethod
+    def ring():
+        sp.call(
+            [PROG, FILE],
+            stdout=sp.DEVNULL)
+        t.sleep(3)
+
+    def run(self):
+        while True:
+            diff = self.time - dt.datetime.now()
+            if diff < dt.timedelta():
+                self.ring()
+                if self.repeat:
+                    self.diff *= 2
                 else:
                     continue
             print('Delta: {}'.format(
-                str(atime - dt.datetime.now())).rsplit('.')[0], end='\r')
+                str(diff)).rsplit('.')[0], end='\r')
             t.sleep(3)
-    except KeyboardInterrupt:
-        pass
+
+    @staticmethod
+    def _try_int(s):
+        try:
+            s = int(s)
+        except (TypeError, ValueError):
+            return 0
+        return s
 
 if __name__ == "__main__":
     p = argparse.ArgumentParser(
         description='Ring alarm after set delta or at set time')
     p.add_argument('time', metavar='T',
-                   help='Alarm time, alarm: hh:mm, h; timer: xm, xh')
-    p.add_argument('diff', nargs='?', default=0, metavar='D', type=int,
+                   help='Alarm time as hh:mm, hh.mm, h or m')
+    p.add_argument('diff', nargs='?', default=0, metavar='D',
                    help='How many hours earlier should the alarm ring')
     p.add_argument('-r', action='count', default=0,
                    help='''Toggle repeat, default depends on type of time''')
-    args = p.parse_args()
-    makeAlarm(args.time, args.diff, args.r)
+    pargs = p.parse_args()
+    if not pargs.diff:
+        Alarm(pargs.time, pargs.time, repeat=not pargs.r).start()
+    else:
+        Alarm(pargs.time, pargs.diff, repeat=not pargs.r).start()
