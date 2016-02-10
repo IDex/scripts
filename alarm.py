@@ -6,6 +6,7 @@ import time as t
 import os
 import re
 import argparse
+import collections
 
 PROG = 'mpv'
 FILE = os.path.expanduser('~/alarma.mp3')
@@ -25,6 +26,8 @@ class Alarm:
                 r'(?:(?P<hours>[0-9]*)h)*(?:(?P<minutes>[0-9]*)m)*', a)
             if self.rawdiff:
                 break
+        else:
+            self.rawdiff = collections.defaultdict(int)
         self.time = None
         self.diff = None
         self.repeat = repeat
@@ -69,7 +72,7 @@ class Alarm:
                 sys.argv[1:],
                 str(self.time),
                 bool(self.repeat),
-                str(self.time - dt.datetime.now())))
+                str(self.time - dt.datetime.now()).rsplit('.')[0]))
         try:
             self.run()
         except KeyboardInterrupt:
@@ -89,9 +92,9 @@ class Alarm:
             if diff < dt.timedelta():
                 self.ring()
                 if self.repeat:
-                    self.diff *= 2
-                else:
                     continue
+                else:
+                    break
             print('Delta: {}'.format(
                 str(diff)).rsplit('.')[0], end='\r')
             t.sleep(3)
@@ -110,7 +113,9 @@ if __name__ == "__main__":
     p.add_argument('time', metavar='T',
                    help='Alarm time as hh:mm, hh.mm, h or m')
     p.add_argument('diff', nargs='?', default=0, metavar='D',
-                   help='How many hours earlier should the alarm ring')
+                   help='''How much earlier should the alarm ring?
+                   If T is left out: After how much time should the alarm ring?
+                   Enter as XXhXXm''')
     p.add_argument('-r', action='count', default=0,
                    help='''Toggle repeat, default depends on type of time''')
     pargs = p.parse_args()
