@@ -8,8 +8,9 @@ import json
 import subprocess as sp
 import argparse
 
-FOLDER = os.path.expanduser('~/new/')
+FOLDER = os.path.expanduser('~/anim/')
 PROG = 'mpv --fs --alang=jpn,en --slang=jpn,en'
+FILETYPES = ['mkv']
 
 
 class Watcher:
@@ -17,13 +18,15 @@ class Watcher:
     Shows unwatched videos in a folder.
     """
 
-    def __init__(self, files, folder, nosave=False, player=None):
+    def __init__(self, files, folder, nosave=False, player=None, filetypes=None, deep_search=False):
         self.savefile = '/watched.json'
         self.folder = folder
-        self.watched = self.load()
-        self.matches = self.find(files)
         self.nosave = nosave
         self.player = player
+        self.deep_search = deep_search
+        self.filetypes = filetypes
+        self.watched = self.load()
+        self.matches = self.find(files)
 
     def save(self):
         """Save watched files, unless forbidden"""
@@ -43,14 +46,19 @@ class Watcher:
             print('{} while loading json'.format(e))
         return watched
 
-    def find(self, files, include_watched=False):
-        """Find files from video dir and return them."""
-        arg = '.*'.join(files)
+    def find(self, search_words, include_watched=False, deep_search=False):
+        """Find files from video dir that match search words."""
+        search_words.extend(self.filetypes)
+        arg = '.*'.join(search_words)
+        if deep_search or self.deep_search:
+            files = [f for b in os.walk(self.folder) for f in b[2]]
+        else:
+            files = os.walk(self.folder).__next__()[2]
         if include_watched:
-            matches = list({x for x in self.watched + os.walk(self.folder).__next__()[2]
+            matches = list({x for x in self.watched + files
                             if re.search(arg, x, re.IGNORECASE)})
         else:
-            matches = [x for x in os.walk(self.folder).__next__()[2]
+            matches = [x for x in files
                        if re.search(arg, x, re.IGNORECASE) and
                        x not in self.watched]
         return matches
@@ -130,6 +138,8 @@ def main():
                         help='Watch everything in folder, ignore history')
     parser.add_argument('-l', '--list', action='store_true', default=False,
                         help='List watchable files instead of watching them')
+    parser.add_argument('-ds', '--deepsearch', action='store_true', default=False,
+                        help='Also play all the files in the subdirectories of main directory')
     parser.add_argument('-lw', '--listwatched', action='store_true',
                         default=False, help='List watched files')
     parser.add_argument('searchwords', nargs='*')
@@ -137,7 +147,9 @@ def main():
     watcher = Watcher(args.searchwords,
                       args.directory,
                       nosave=args.nosave,
-                      player=args.player)
+                      player=args.player,
+                      filetypes=FILETYPES,
+                      deep_search=args.deepsearch)
     if args.remove:
         watcher.remove()
         raise SystemExit
