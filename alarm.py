@@ -9,34 +9,36 @@ import argparse
 import collections
 
 PROG = 'mpv'
-FILE = os.path.expanduser('~/alarma.mp3')
+FILE = os.path.expanduser('alarma.mp3')
 
 
 class Alarm:
 
-    def __init__(self, *args, repeat=True):
+    def __init__(self, *args, repeat=True, mute=False):
         for a in args:
-            if 'h' not in a and 'm' not in a:
+            if 'h' not in a and 'm' not in a and 's' not in a:
                 self.rawtime = self.parse(
                     r'(?P<hours>[0-9]*)[:\.]*(?P<minutes>[0-9]*)', a)
                 if self.rawtime:
                     break
         for a in args:
             self.rawdiff = self.parse(
-                r'(?:(?P<hours>[0-9]*)h)*(?:(?P<minutes>[0-9]*)m)*', a)
+                r'(?:(?P<hours>[0-9]*)h)*(?:(?P<minutes>[0-9]*)m)*(?:(?P<seconds>[0-9]*)s)*', a)
             if self.rawdiff:
                 break
         else:
             self.rawdiff = collections.defaultdict(int)
         self.time = None
         self.diff = None
+        self.mute = mute
         self.repeat = repeat
         self.setup()
 
     def setup(self):
         self.diff = dt.timedelta(
             hours=self._try_int(self.rawdiff.get('hours')),
-            minutes=self._try_int(self.rawdiff.get('minutes'))
+            minutes=self._try_int(self.rawdiff.get('minutes')),
+            seconds=self._try_int(self.rawdiff.get('seconds'))
         )
         try:
             self.time = dt.datetime.combine(
@@ -87,14 +89,19 @@ class Alarm:
         t.sleep(3)
 
     def run(self):
+        alarm_duration = -dt.timedelta(minutes=1)
         while True:
             diff = self.time - dt.datetime.now()
-            if diff < dt.timedelta():
-                self.ring()
+            if diff < dt.timedelta() and diff > alarm_duration:
+                # print(diff, alarm_duration)
+                if not self.mute:
+                    self.ring()
                 if self.repeat:
                     continue
                 else:
                     break
+            elif diff < alarm_duration:
+                return
             print('Delta: {}'.format(
                 str(diff)).rsplit('.')[0], end='\r')
             t.sleep(3)
@@ -118,8 +125,10 @@ if __name__ == "__main__":
                    Enter as XXhXXm''')
     p.add_argument('-r', action='count', default=0,
                    help='''Toggle repeat, default depends on type of time''')
+    p.add_argument('-m', action='store_true', default=False,
+                   help='''Mute the alarm''')
     pargs = p.parse_args()
     if not pargs.diff:
-        Alarm(pargs.time, pargs.time, repeat=not pargs.r).start()
+        Alarm(pargs.time, repeat=not pargs.r, mute=pargs.m).start()
     else:
-        Alarm(pargs.time, pargs.diff, repeat=not pargs.r).start()
+        Alarm(pargs.time, pargs.diff, repeat=not pargs.r, mute=pargs.m).start()
