@@ -7,27 +7,32 @@ import os
 import re
 import argparse
 import collections
+import pdb
 
 PROG = 'mpv'
 FILE = os.path.expanduser('alarma.mp3')
 
 
+def flatten(l):
+    return flatten(l[0]) + (flatten(l[1:]) if len(l) >
+                            1 else []) if type(l) is list else [l]
+
+
 class Alarm:
 
-    def __init__(self, *args, repeat=True, mute=False):
-        for a in args:
-            if 'h' not in a and 'm' not in a and 's' not in a:
-                self.rawtime = self.parse(
-                    r'(?P<hours>[0-9]*)[:\.]*(?P<minutes>[0-9]*)', a)
-                if self.rawtime:
-                    break
-        for a in args:
-            self.rawdiff = self.parse(
-                r'(?:(?P<hours>[0-9]*)h)*(?:(?P<minutes>[0-9]*)m)*(?:(?P<seconds>[0-9]*)s)*', a)
-            if self.rawdiff:
+    def __init__(self, *args, repeat=False, mute=False):
+        self.rawdiff = collections.Counter()
+        args = list(args)
+        for a in flatten(args):
+            self.rawtime = self.parse(
+                r'(?P<hours>[0-9]*)[:\.]*(?P<minutes>[0-9]*)', a)
+            if self.rawtime:
                 break
-        else:
-            self.rawdiff = collections.defaultdict(int)
+        for a in flatten(args):
+            self.rawdiff.update(
+                self.parse(
+                    r'(?:(?P<hours>[0-9]*)h)*(?:(?P<minutes>[0-9]*)m)*(?:(?P<seconds>[0-9]*)s)*',
+                    a))
         self.time = None
         self.diff = None
         self.mute = mute
@@ -50,7 +55,6 @@ class Alarm:
         except AttributeError:  # type is timer
             self.time = dt.datetime.now()
             self.diff *= -1
-            self.repeat = not self.repeat
         self.time -= self.diff
         if self.time < dt.datetime.now():
             self.time += dt.timedelta(days=1)
@@ -60,7 +64,7 @@ class Alarm:
         m = re.search(regex, string)
         # making sure match object isn't full of None, i.e. not an actual match
         if m and {x for x in m.groupdict().values() if x is not None}:
-            return m.groupdict(0)
+            return {k: int(v) for k, v in m.groupdict(0).items() if v}
         else:
             return None
 
@@ -114,21 +118,22 @@ class Alarm:
             return 0
         return s
 
+
 if __name__ == "__main__":
     p = argparse.ArgumentParser(
         description='Ring alarm after set delta or at set time')
     p.add_argument('time', metavar='T',
                    help='Alarm time as hh:mm, hh.mm, h or m')
-    p.add_argument('diff', nargs='?', default=0, metavar='D',
+    p.add_argument('diff', nargs='*', default=0, metavar='D',
                    help='''How much earlier should the alarm ring?
                    If T is left out: After how much time should the alarm ring?
                    Enter as XXhXXm''')
     p.add_argument('-r', action='count', default=0,
-                   help='''Toggle repeat, default depends on type of time''')
+                   help='''Toggle repeat''')
     p.add_argument('-m', action='store_true', default=False,
                    help='''Mute the alarm''')
     pargs = p.parse_args()
     if not pargs.diff:
-        Alarm(pargs.time, repeat=not pargs.r, mute=pargs.m).start()
+        Alarm(pargs.time, repeat=pargs.r, mute=pargs.m).start()
     else:
-        Alarm(pargs.time, pargs.diff, repeat=not pargs.r, mute=pargs.m).start()
+        Alarm(pargs.time, pargs.diff, repeat=pargs.r, mute=pargs.m).start()
