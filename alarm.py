@@ -24,7 +24,7 @@ class Alarm:
         self.rawdiff = collections.Counter()
         args = list(args)
         for a in flatten(args):
-            if 'm' not in a and 'h' not in a:
+            if 's' not in a and 'm' not in a and 'h' not in a:
                 self.rawtime = self.parse(
                     r'(?P<hours>[0-9]*)[:\.]*(?P<minutes>[0-9]*)', a)
                 if self.rawtime:
