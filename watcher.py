@@ -8,9 +8,9 @@ import json
 import subprocess as sp
 import argparse
 
-FOLDER = os.path.expanduser('~/anim/')
+FOLDER = os.path.expanduser('~/new/')
 PROG = 'mpv --fs --alang=jpn,en --slang=jpn,en'
-FILETYPES = ['mkv']
+FILETYPES = ['mkv', 'mp4']
 
 
 class Watcher:
@@ -24,7 +24,9 @@ class Watcher:
         self.nosave = nosave
         self.player = player
         self.deep_search = deep_search
-        self.filetypes = filetypes
+        self.filetypes = '|'.join(filetypes)
+        self.filetypes = f'({self.filetypes})'
+        print(self.filetypes)
         self.watched = self.load()
         self.matches = self.find(files)
 
