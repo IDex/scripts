@@ -86,18 +86,7 @@ class Watcher:
             else:
                 print('Removed file:', self.folder + f)
 
-    def playone(self, f=None):
-        """Play one file from unwatched"""
-        if not f:
-            f = sorted(self.matches).pop()
-        print('Playing {}'.format(f))
-        if sp.call(['mpv', '--fs', self.folder + f], stdout=sp.DEVNULL):
-            return
-        else:
-            self.watched.append(f)
-            self.save()
-
-    def playall(self, nonstop=False):
+    def play(self, nonstop=False):
         """Play all files that match"""
         for f in sorted(self.matches):
             print('Playing {}'.format(f))
@@ -170,9 +159,9 @@ def main():
             print(f)
         raise SystemExit
     if args.nonstop:
-        watcher.playall(nonstop=True)
+        watcher.play(nonstop=True)
     else:
-        watcher.playall()
+        watcher.play()
 
 if __name__ == '__main__':
     main()
