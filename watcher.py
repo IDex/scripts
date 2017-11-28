@@ -18,7 +18,8 @@ class Watcher:
     Shows unwatched videos in a folder.
     """
 
-    def __init__(self, files, folder, nosave=False, player=None, filetypes=None, deep_search=False):
+    def __init__(self, search_words, folder, nosave=False, player=None, filetypes=None, deep_search=False):
+        self.search_words = search_words
         self.savefile = '/watched.json'
         self.folder = folder
         self.nosave = nosave
@@ -28,7 +29,7 @@ class Watcher:
         self.filetypes = f'({self.filetypes})'
         print(self.filetypes)
         self.watched = self.load()
-        self.matches = self.find(files)
+        self.matches = None
 
     def save(self):
         """Save watched files, unless forbidden"""
@@ -50,6 +51,7 @@ class Watcher:
 
     def find(self, search_words, include_watched=False, deep_search=False):
         """Find files from video dir that match search words."""
+        print(search_words)
         search_words.extend(self.filetypes)
         arg = '.*'.join(search_words)
         if deep_search or self.deep_search:
@@ -88,6 +90,8 @@ class Watcher:
 
     def play(self, nonstop=False):
         """Play all files that match"""
+        if not self.matches:
+            self.matches = self.find(self.search_words)
         for f in sorted(self.matches):
             print('Playing {}'.format(f))
             if not sp.call([*self.player.split(), self.folder + f],
